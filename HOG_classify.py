@@ -18,13 +18,13 @@ for image in images:
 		cars.append(image)
 
 ### TODO: Tweak these parameters and see how the results change.
-colorspace = 'RGB' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-orient = 9
-pix_per_cell = 8
-cell_per_block = 2
+colorspace = 'BGR' # Can be BGR, HSV, LUV, HLS, YUV, YCrCb, Gray
+orient = 6
+pix_per_cell = 12
+cell_per_block = 4
 hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
 spatial_size=(32, 32)
-hist_bins=32
+hist_bins=20
 
 t=time.time()
 car_features = extract_features(cars, cspace=colorspace, orient=orient, 
@@ -65,7 +65,7 @@ print(round(t2-t, 2), 'Seconds to train SVC...')
 print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 
 # Save SVM to be able to use it without having to train it everytime
-# Copied from https://github.com/ksakmann/CarND-Vehicle-Detection/blob/master/HOG_Classify.py
+# Adapted from https://github.com/ksakmann/CarND-Vehicle-Detection/blob/master/HOG_Classify.py
 pickle_file = 'svc_pickle.p'
 print('Saving data to pickle file...')
 try:
@@ -78,7 +78,8 @@ try:
 				'orient': orient,
 				'pix_per_cell': pix_per_cell,
 				'cell_per_block': cell_per_block,
-				'colorspace': colorspace
+				'colorspace': colorspace,
+				'hog_channel': hog_channel
 			},
 			pfile, pickle.HIGHEST_PROTOCOL)
 except Exception as e:
@@ -86,3 +87,18 @@ except Exception as e:
 	raise
 
 print('Data cached in pickle file.')
+
+"""
+# Call our function with vis=True to see an image output
+img = cv2.imread(cars[0])
+features, hog_image = get_hog_features(img[:,:,0], orient, 
+                        pix_per_cell, cell_per_block, 
+                        vis=True, feature_vec=False)
+						
+input_folder = './test_images/'
+write_name = input_folder + 'output_car.jpg'
+cv2.imwrite(write_name, img)
+final_image_RGB = np.dstack((hog_image, hog_image, hog_image))*255
+write_name = input_folder + 'output_visualization.jpg'
+cv2.imwrite(write_name, final_image_RGB)
+"""
