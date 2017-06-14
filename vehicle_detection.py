@@ -106,6 +106,7 @@ images = glob.glob(input_folder + 'filename*.jpg')
 #images = glob.glob(input_folder + 'test*.jpg')
 for image in images:
 	filename = os.path.basename(image)
+	print('Processing file', filename)
 	img = cv2.imread(image)
 	out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins, hog_channel)
 	write_name = input_folder + 'output_' + filename
