@@ -49,27 +49,27 @@ def bin_spatial(img, size=(32, 32), colorspace='BGR', hog_channel=0):
 	else:
 		return cv2.resize(img[:,:,hog_channel], size).ravel()
 						
-def color_hist(img, nbins=32, cspace='BGR', hog_channel=0):
+def color_hist(img, nbins=32, cspace='BGR', hog_channel=0, bins_range=(0, 256)):
 	if cspace == 'Gray':
-		channel1_hist = np.histogram(img, bins=nbins)
+		channel1_hist = np.histogram(img, bins=nbins, range=bins_range)
 		return channel1_hist[0]
 	elif hog_channel == 'ALL':
 		# Compute the histogram of the color channels separately
-		channel1_hist = np.histogram(img[:,:,0], bins=nbins)
-		channel2_hist = np.histogram(img[:,:,1], bins=nbins)
-		channel3_hist = np.histogram(img[:,:,2], bins=nbins)
+		channel1_hist = np.histogram(img[:,:,0], bins=nbins, range=bins_range)
+		channel2_hist = np.histogram(img[:,:,1], bins=nbins, range=bins_range)
+		channel3_hist = np.histogram(img[:,:,2], bins=nbins, range=bins_range)
 		# Concatenate the histograms into a single feature vector
 		hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
 		return hist_features
 	else:
-		channel1_hist = np.histogram(img[:,:,hog_channel], bins=nbins)
+		channel1_hist = np.histogram(img[:,:,hog_channel], bins=nbins, range=bins_range)
 		return channel1_hist[0]
 	
 # Define a function to extract features from a list of images
 # Have this function call bin_spatial() and color_hist()
 def extract_features(imgs, cspace='BGR', orient=9, 
 						pix_per_cell=8, cell_per_block=2, hog_channel=0, spatial_size=(32, 32),
-						hist_bins=32, hist_range=(0, 256)):							
+						hist_bins=32):							
 				
 	# Create a list to append feature vectors to
 	features = []

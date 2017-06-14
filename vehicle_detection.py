@@ -99,9 +99,11 @@ ystart = 400
 ystop = 656
 scale = 1.5
 
-input_folder = './test_images/'
 # Make a list of calibration images
-images = glob.glob(input_folder + 'test*.jpg')
+input_folder = './project_video/'
+images = glob.glob(input_folder + 'filename*.jpg')
+#input_folder = './test_images/'
+#images = glob.glob(input_folder + 'test*.jpg')
 for image in images:
 	filename = os.path.basename(image)
 	img = cv2.imread(image)

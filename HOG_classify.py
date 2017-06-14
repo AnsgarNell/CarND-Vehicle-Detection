@@ -18,13 +18,13 @@ for image in images:
 		cars.append(image)
 
 ### TODO: Tweak these parameters and see how the results change.
-colorspace = 'BGR' # Can be BGR, HSV, LUV, HLS, YUV, YCrCb, Gray
-orient = 6
-pix_per_cell = 12
-cell_per_block = 4
+colorspace = 'YCrCb' # Can be BGR, HSV, LUV, HLS, YUV, YCrCb, Gray
+orient = 9
+pix_per_cell = 8
+cell_per_block = 2
 hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
 spatial_size=(32, 32)
-hist_bins=20
+hist_bins= 32
 
 t=time.time()
 car_features = extract_features(cars, cspace=colorspace, orient=orient, 
