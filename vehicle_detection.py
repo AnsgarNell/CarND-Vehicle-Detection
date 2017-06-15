@@ -19,42 +19,40 @@ colorspace = dist_pickle["colorspace"]
 hog_channel = dist_pickle["hog_channel"]
 
 def add_heat(heatmap, bbox_list):
-    # Iterate through list of bboxes
-    for box in bbox_list:
-        # Add += 1 for all pixels inside each bbox
-        # Assuming each "box" takes the form ((x1, y1), (x2, y2))
-        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
-
-    # Return updated heatmap
-    return heatmap# Iterate through list of bboxes
-    
+	# Iterate through list of bboxes
+	for box in bbox_list:
+		# Add += 1 for all pixels inside each bbox
+		# Assuming each "box" takes the form ((x1, y1), (x2, y2))
+		heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
+	# Return updated heatmap
+	return heatmap# Iterate through list of bboxes
+	
 def apply_threshold(heatmap, threshold):
-    # Zero out pixels below the threshold
-    heatmap[heatmap <= threshold] = 0
-    # Return thresholded map
-    return heatmap
+	# Zero out pixels below the threshold
+	heatmap[heatmap <= threshold] = 0
+	# Return thresholded map
+	return heatmap
 
 def draw_labeled_bboxes(img, labels):
-    # Iterate through all detected cars
-    for car_number in range(1, labels[1]+1):
-        # Find pixels with each car_number label value
-        nonzero = (labels[0] == car_number).nonzero()
-        # Identify x and y values of those pixels
-        nonzeroy = np.array(nonzero[0])
-        nonzerox = np.array(nonzero[1])
-        # Define a bounding box based on min/max x and y
-        bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
-        # Draw the box on the image
-        cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
-    # Return the image
-    return img
+	# Iterate through all detected cars
+	for car_number in range(1, labels[1]+1):
+		# Find pixels with each car_number label value
+		nonzero = (labels[0] == car_number).nonzero()
+		# Identify x and y values of those pixels
+		nonzeroy = np.array(nonzero[0])
+		nonzerox = np.array(nonzero[1])
+		# Define a bounding box based on min/max x and y
+		bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+		# Draw the box on the image
+		cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
+	# Return the image
+	return img
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
 def find_cars(img):
 	
 	rectangles = []
 	draw_img = np.copy(img)
-	img = img.astype(np.float32)/255
 	
 	# apply color conversion if other than 'RGB'
 	ctrans_tosearch = convert_color(img, colorspace)
@@ -139,11 +137,13 @@ def pipeline(img):
 	out_img, rectangles = find_cars(converted_image)
 	heat = add_heat(heat, rectangles)
 	heatmaps.append(heat)
-	heat = sum(heatmaps)/len(heatmaps)
+	avg_heat = np.zeros_like(img[:,:,0]).astype(np.float)
+	for i in range(1, len(heatmaps)):
+		avg_heat = avg_heat + (heatmaps[i-1])*i
 	# Apply threshold to help remove false positives
-	heat = apply_threshold(heat,6)
+	avg_heat = apply_threshold(avg_heat,22)
 	# Find final boxes from heatmap using label function
-	labels = label(heat)
+	labels = label(avg_heat)
 	draw_img = draw_labeled_bboxes(np.copy(img), labels)
 	return draw_img
 	
@@ -152,11 +152,11 @@ ystop = 656
 scale = 1.5
 
 # Make a list of calibration images
-input_folder = './project_video/'
-images = glob.glob(input_folder + 'filename*.jpg')
-#input_folder = './test_images/'
-#images = glob.glob(input_folder + 'test*.jpg')
-"""
+#input_folder = './project_video/'
+#images = glob.glob(input_folder + 'filename*.jpg')
+input_folder = './test_images/'
+images = glob.glob(input_folder + 'test*.jpg')
+
 for image in images:
 	filename = os.path.basename(image)
 	print('Processing file', filename)
@@ -164,9 +164,8 @@ for image in images:
 	out_img, rectangles = find_cars(img)
 	write_name = input_folder + 'output_' + filename
 	cv2.imwrite(write_name, out_img)
-"""
 
-heatmaps = deque(maxlen=15)
+heatmaps = deque(maxlen=10)
 
 # Import everything needed to edit/save/watch video clips
 from moviepy.editor import VideoFileClip
@@ -176,7 +175,7 @@ white_output = 'test_video_result.mp4'
 ## To do so add .subclip(start_second,end_second) to the end of the line below
 ## Where start_second and end_second are integer values representing the start and end of the subclip
 ## You may also uncomment the following line for a subclip of the first 5 seconds
-clip1 = VideoFileClip("project_video.mp4").subclip(20,25)
-#clip1 = VideoFileClip("project_video.mp4")
+#clip1 = VideoFileClip("project_video.mp4").subclip(39,43)
+clip1 = VideoFileClip("project_video.mp4")
 white_clip = clip1.fl_image(pipeline) #NOTE: this function expects color images!!
 white_clip.write_videofile(white_output, audio=False)
