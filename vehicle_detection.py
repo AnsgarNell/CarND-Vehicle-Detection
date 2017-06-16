@@ -6,6 +6,7 @@ import os
 import glob
 from scipy.ndimage.measurements import label
 from collections import deque
+import matplotlib.pyplot as plt
 
 dist_pickle = pickle.load( open("svc_pickle.p", "rb" ) )
 svc = dist_pickle["svc"]
@@ -49,10 +50,9 @@ def draw_labeled_bboxes(img, labels):
 	return img
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
-def find_cars(img):
+def find_cars(img, ystart, ystop, scale):
 	
 	rectangles = []
-	draw_img = np.copy(img)
 	
 	# apply color conversion if other than 'RGB'
 	ctrans_tosearch = convert_color(img, colorspace)
@@ -123,46 +123,69 @@ def find_cars(img):
 				xbox_left = np.int(xleft*scale)
 				ytop_draw = np.int(ytop*scale)
 				win_draw = np.int(window*scale)
-				cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(255,0,0),6) 
 				rectangles.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
 				
-	return draw_img, rectangles
+	return rectangles
+	
+def draw_rectangles(img, rectangles1, rectangles2):
+	draw_img = np.copy(img)
+	for rectangle in rectangles1:
+		cv2.rectangle(draw_img,(rectangle[0][0], rectangle[0][1]),(rectangle[1][0],rectangle[1][1]),(255,0,0),6)
+	for rectangle in rectangles2:
+		cv2.rectangle(draw_img,(rectangle[0][0], rectangle[0][1]),(rectangle[1][0],rectangle[1][1]),(255,0,0),6)
+	return draw_img
 	
 def pipeline(img):
 
-	global heatmaps
+	global heatmaps,i
 
 	heat = np.zeros_like(img[:,:,0]).astype(np.float)
 	converted_image = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-	out_img, rectangles = find_cars(converted_image)
-	heat = add_heat(heat, rectangles)
+	rectangles_125 = find_cars(converted_image, ystart, ystop, 1.25)
+	heat = add_heat(heat, rectangles_125)
+	rectangles_15 = find_cars(converted_image, ystart, ystop, 1.5)
+	heat = add_heat(heat, rectangles_15)
+	"""
+	# Visualize the heatmap when displaying	
+	heatmap = np.clip(heat, 0, 255)
+	plt.imshow(heatmap, cmap='hot')
+	write_name = output_folder + 'output_heatmap_' + str(i) + '.jpg'
+	plt.savefig(write_name)
+	plt.clf()
+	"""
 	heatmaps.append(heat)
 	avg_heat = np.zeros_like(img[:,:,0]).astype(np.float)
 	for i in range(1, len(heatmaps)):
 		avg_heat = avg_heat + (heatmaps[i-1])*i
 	# Apply threshold to help remove false positives
 	avg_heat = apply_threshold(avg_heat,22)
+	
 	# Find final boxes from heatmap using label function
 	labels = label(avg_heat)
 	draw_img = draw_labeled_bboxes(np.copy(img), labels)
+	"""
+	converted_image = cv2.cvtColor(draw_img, cv2.COLOR_RGB2BGR)
+	write_name = output_folder + 'output_image_' + str(i) + '.jpg'
+	cv2.imwrite(write_name, converted_image)
+	"""
 	return draw_img
 	
 ystart = 400
 ystop = 656
-scale = 1.5
+i = 0
 
 # Make a list of calibration images
-#input_folder = './project_video/'
-#images = glob.glob(input_folder + 'filename*.jpg')
-input_folder = './test_images/'
-images = glob.glob(input_folder + 'test*.jpg')
+output_folder = './output_images/'
+images = glob.glob('test_images/' + '*.jpg')
 
 for image in images:
 	filename = os.path.basename(image)
 	print('Processing file', filename)
 	img = cv2.imread(image)
-	out_img, rectangles = find_cars(img)
-	write_name = input_folder + 'output_' + filename
+	rectangles_125 = find_cars(img, ystart, ystop, 1.25)
+	rectangles_15 = find_cars(img, ystart, ystop, 1.5)
+	out_img = draw_rectangles(img, rectangles_125, rectangles_15) 
+	write_name = output_folder + 'output_' + filename
 	cv2.imwrite(write_name, out_img)
 
 heatmaps = deque(maxlen=10)
@@ -175,7 +198,7 @@ white_output = 'project_video_result.mp4'
 ## To do so add .subclip(start_second,end_second) to the end of the line below
 ## Where start_second and end_second are integer values representing the start and end of the subclip
 ## You may also uncomment the following line for a subclip of the first 5 seconds
-#clip1 = VideoFileClip("project_video.mp4").subclip(39,43)
+#clip1 = VideoFileClip("project_video.mp4").subclip(38,39)
 clip1 = VideoFileClip("project_video.mp4")
 white_clip = clip1.fl_image(pipeline) #NOTE: this function expects color images!!
 white_clip.write_videofile(white_output, audio=False)

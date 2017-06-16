@@ -23,7 +23,7 @@ orient = 9
 pix_per_cell = 8
 cell_per_block = 2
 hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
-spatial_size=(16, 16)
+spatial_size=(32, 32)
 hist_bins= 32
 
 t=time.time()
@@ -91,14 +91,37 @@ print('Data cached in pickle file.')
 """
 # Call our function with vis=True to see an image output
 img = cv2.imread(cars[0])
+input_folder = './output_images/'
+write_name = input_folder + 'original_car.jpg'
+cv2.imwrite(write_name, img)
+img = convert_color(img, colorspace)
 features, hog_image = get_hog_features(img[:,:,0], orient, 
                         pix_per_cell, cell_per_block, 
                         vis=True, feature_vec=False)
 						
-input_folder = './test_images/'
+input_folder = './output_images/'
 write_name = input_folder + 'output_car.jpg'
-cv2.imwrite(write_name, img)
+final_image_RGB = np.dstack((img[:,:,0], img[:,:,0], img[:,:,0]))*255
+cv2.imwrite(write_name, final_image_RGB)
 final_image_RGB = np.dstack((hog_image, hog_image, hog_image))*255
-write_name = input_folder + 'output_visualization.jpg'
+write_name = input_folder + 'output_hog_car_visualization.jpg'
+cv2.imwrite(write_name, final_image_RGB)
+
+
+img = cv2.imread(notcars[0])
+input_folder = './output_images/'
+write_name = input_folder + 'original_notcar.jpg'
+cv2.imwrite(write_name, img)
+img = convert_color(img, colorspace)
+features, hog_image = get_hog_features(img[:,:,0], orient, 
+                        pix_per_cell, cell_per_block, 
+                        vis=True, feature_vec=False)
+						
+input_folder = './output_images/'
+write_name = input_folder + 'output_notcar.jpg'
+final_image_RGB = np.dstack((img[:,:,0], img[:,:,0], img[:,:,0]))*255
+cv2.imwrite(write_name, final_image_RGB)
+final_image_RGB = np.dstack((hog_image, hog_image, hog_image))*255
+write_name = input_folder + 'output_hog_notcar_visualization.jpg'
 cv2.imwrite(write_name, final_image_RGB)
 """
